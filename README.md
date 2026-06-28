@@ -24,23 +24,6 @@ sudo cap-alert-configure
 
 After the keyring is installed, use **`apt install`**, **`apt upgrade`**, and **`apt remove`** for cap-alert like any other package.
 
-**Or** download `cap-alert_*_all.deb` from [Releases](https://github.com/hardenedpenguin/cap-alert/releases) and install locally:
-
-```bash
-wget -O /tmp/cap-alert_1.0.0-1_all.deb \
-  https://github.com/hardenedpenguin/cap-alert/releases/download/v1.0.0-1/cap-alert_1.0.0-1_all.deb
-sudo apt install /tmp/cap-alert_1.0.0-1_all.deb
-sudo cap-alert-configure
-```
-
-Upgrading from **cap-warn**: install `cap-alert`; it replaces `cap-warn` and migrates `/etc/cap-warn`, `/var/lib/cap-warn`, and `/var/log/cap-warn` automatically.
-
-The setup wizard writes `/etc/cap-alert/config.php`. Re-run it anytime to change settings:
-
-```bash
-sudo cap-alert-configure
-```
-
 Test manually with `sudo cap-alert` (the wrapper drops to the `asterisk` user automatically).
 
 CAP-Alert runs as **`asterisk`**, not root: the timer, manual runs, and `net-flag` use the asterisk account. State and logs under `/var/lib/cap-alert/` and `/var/log/cap-alert/` are owned by `asterisk`. Configuration lives in `/etc/cap-alert/` (**`root:asterisk` mode 750**) with **`config.php` mode 640** so only root (via `cap-alert-configure`) and the daemon can read secrets. Only `sudo cap-alert-configure` needs root for debconf. Serial GPS devices are usually in **`dialout`**, which the asterisk account is already a member of on typical AllStar installs.
