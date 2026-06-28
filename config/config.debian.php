@@ -18,6 +18,7 @@ return [
     'local_playback' => true,
     'quiet_hours' => false,
     'hold_minutes' => 25,
+    'replay_hours' => 4,
     'alert_cache_seconds' => 300,
     'debug' => false,
     'debug_alert_file' => '/usr/share/cap-alert/test_alert.json',

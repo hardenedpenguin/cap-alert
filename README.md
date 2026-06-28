@@ -33,7 +33,8 @@ CAP-Alert runs as **`asterisk`**, not root: the timer, manual runs, and `net-fla
 - PHP 8.0+ with curl
 - sox
 - asl3-asterisk (AllStarLink 3)
-- libespeak-ng1 (local TTS via asl3-tts / espeak-ng)
+- libespeak-ng1
+- **asl3-tts** (recommended) — Piper voices via `asl-tts`; the package also installs **`espeak-ng`**, which CAP-Alert uses only if `asl-tts` is unavailable
 - Optional: gpsd, VoiceRSS API key, Pushover credentials (CPU alarms via kernel thermal/hwmon on Pi, ARM64, and x86_64)
 
 Alert sounds are bundled as **ulaw** and installed to `/usr/share/cap-alert/sounds/`.
@@ -44,7 +45,7 @@ Settings live in `/etc/cap-alert/config.php`. Use `sudo cap-alert-configure` rat
 
 Re-running the wizard updates wizard-owned keys and **preserves** manual settings such as `alert_hooks`, `expand_descriptions`, and `alert_cache_seconds`. Leave Pushover/VoiceRSS password fields blank on reconfigure to keep existing keys.
 
-The wizard configures: GPS, quiet hours, blocklists, tail blocklist, playback window, hold time, TTS voice, courtesy tone, WX enable, county names, geo hazards, Pushover (including failure/all-clear notifications), and CPU alarm thresholds.
+The wizard configures: GPS, quiet hours, blocklists, tail blocklist, playback window, replay interval, TTS voice, courtesy tone, WX enable, county names, geo hazards, Pushover (including failure/all-clear notifications), and CPU alarm thresholds.
 
 ### Core settings
 
@@ -56,12 +57,14 @@ The wizard configures: GPS, quiet hours, blocklists, tail blocklist, playback wi
 | `gps.min_satellites` | Integer (default `3`) | Reject fixes with fewer satellites |
 | `gps.max_age_seconds` | Integer (default `120`) | Reject stale gpsd fixes; `0` = any age |
 | `gps.device` | Path or `""` | Optional serial device; empty uses gpsd then auto-detect |
-| `tts_key` | VoiceRSS API key or `""` | Online TTS; empty uses asl3-tts |
+| `tts_key` | VoiceRSS API key or `""` | Online TTS; empty uses local backends (see below) |
+| `tts_voice` | Piper model filename or `""` | `asl-tts` voice when using local TTS; empty = default Piper model |
 | `local_playback` | `true` / `false` | `true` = `rpt localplay`; `false` = `rpt playback` (hub) |
 | `quiet_hours` | `true` / `false` | When `true`, suppress lower-priority audio during quiet hours |
 | `quiet_hours_window.start` / `.end` | `HH:MM` (default `01:00`–`07:00`) | Local quiet-hours window |
 | `quiet_hours_window.allow_severe` | `true` / `false` | Warnings still play during quiet hours when `true` |
-| `hold_minutes` | Integer (default `25`) | Minutes before repeating the same NWS alert |
+| `replay_hours` | Number (default `4`) | Hours before tail-replaying an unchanged NWS alert; new/changed alerts always play immediately |
+| `hold_minutes` | Integer (legacy) | Used only when `replay_hours` is unset; prefer `replay_hours` |
 | `alert_cache_seconds` | Integer (default `300`) | Minimum age before re-fetching NWS data |
 | `expand_descriptions` | `true` / `false` | TTS for Special Weather Statements and expanded text |
 | `repeat_expanded_on_tail` | `true` / `false` | Include TTS clip in tail replays |
@@ -75,6 +78,48 @@ When `gps.enabled` is `true`, each run tries **gpsd** first (`gpspipe`), then an
 Install **`gpsd`** and **`gpsd-clients`** on mobile nodes, or set `gps.device` for a direct serial receiver. Serial devices are usually in the **`dialout`** group; the `asterisk` account is typically already a member on AllStar installs.
 
 Run `sudo cap-alert doctor` with GPS enabled to verify gpsd, device access, and a live fix.
+
+### Text-to-speech (TTS)
+
+CAP-Alert synthesizes spoken descriptions for weather text, cyclone advisories, earthquakes, wildfires, and auto-generated county names. Backends are tried in this order:
+
+1. **VoiceRSS** — when `tts_key` is set (online; uses the VoiceRSS *Amy* voice; `tts_voice` is not used)
+2. **`asl-tts`** (from **`asl3-tts`**) — local Piper synthesis when `tts_key` is empty (recommended on AllStar nodes)
+3. **`espeak-ng`** — also from **`asl3-tts`**; used only if the `asl-tts` command is missing (unusual when `asl3-tts` is installed)
+
+Install **`asl3-tts`** for local TTS. That package provides **`asl-tts`** (Piper) and **`espeak-ng`** together. Piper models live under **`/var/lib/piper-tts/`** as `*.onnx` files (each needs a matching `*.onnx.json`). List what is installed:
+
+```bash
+ls /var/lib/piper-tts/*.onnx
+```
+
+When using `asl-tts`, set **`tts_voice`** to the **full model filename**, not a short name. For example, Ryan is `en_US-ryan-low.onnx`, not `ryan`. Leave `tts_voice` empty to use the `asl-tts` default (`en_US-amy-low.onnx`).
+
+Example (`config.php` or `sudo cap-alert-configure`):
+
+```php
+'tts_key' => '',
+'tts_voice' => 'en_US-ryan-low.onnx',
+```
+
+Test a voice before changing config (run as **`asterisk`**, replace `1998` with your node):
+
+```bash
+sudo -u asterisk asl-tts -n 1998 -t "test ryan voice" -f /tmp/tts-test -v en_US-ryan-low.onnx
+ls -la /tmp/tts-test.ul
+```
+
+`sudo cap-alert doctor` reports which TTS backend is available. With `debug => true`, run logs show whether each clip used VoiceRSS, `asl-tts`, or `espeak-ng`.
+
+### Alert replay interval
+
+When an NWS alert is **new or changed**, CAP-Alert always plays the full announcement (intro, event sounds, optional TTS, outro). While the **same** alert stays active, later timer runs normally play a shorter **tail** replay only.
+
+Set **`replay_hours`** (default **4**) to limit how often that tail replay happens. Example: with a 15-minute poll interval and `replay_hours => 4`, you hear the full alert once, then at most one tail replay every four hours until the alert changes or clears.
+
+New or upgraded alerts still play immediately regardless of the replay timer. To replay sooner after a tail, delete `/var/lib/cap-alert/alert-played.flag` (see [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)).
+
+Legacy configs without `replay_hours` fall back to **`hold_minutes`** (minutes).
 
 ### Alert filtering and dedup
 

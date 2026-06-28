@@ -1,3 +1,12 @@
+cap-alert (1.0.1-1) unstable; urgency=medium
+
+  * Add replay_hours (default 4) to throttle tail replays of unchanged NWS
+    alerts; new or changed alerts still play immediately.
+  * Fix scheduled timer runs clearing the replay hold every poll cycle.
+  * Document Piper/asl-tts voice selection and alert replay interval in README.
+
+ -- Jory A. Pratt <geekypenguin@gmail.com>  Sun, 28 Jun 2026 11:44:37 -0500
+
 cap-alert (1.0.0-1) unstable; urgency=medium
 
   * Initial release as cap-alert (renamed from cap-warn).

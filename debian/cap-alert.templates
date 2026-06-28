@@ -85,10 +85,13 @@ Default: true
 Description: Allow warnings during quiet hours?
  When enabled, NWS warnings and severe/extreme alerts still play overnight.
 
-Template: cap-alert/hold_minutes
+Template: cap-alert/replay_hours
 Type: string
-Default: 25
-Description: Minutes before repeating the same NWS alert:
+Default: 4
+Description: Hours before replaying an unchanged NWS alert:
+ When the same alert is still active, CAP-Alert plays the full announcement
+ once, then waits this long before a shorter tail replay. New or changed
+ alerts always play immediately.
 
 Template: cap-alert/blocked_events
 Type: string
@@ -370,6 +373,11 @@ Template: cap-alert/invalid_wildfire_acres
 Type: error
 Description: Invalid wildfire acreage
  Enter a positive integer number of acres (for example 100 or 250).
+
+Template: cap-alert/invalid_replay_hours
+Type: error
+Description: Invalid replay hours
+ Enter a positive number of hours from 0.25 to 168 (for example 4 or 6).
 
 Template: cap-alert/invalid_hold_minutes
 Type: error

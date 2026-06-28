@@ -51,6 +51,7 @@ final class Config
                 'allow_severe' => true,
             ],
             'hold_minutes' => 25,
+            'replay_hours' => null,
             'alert_cache_seconds' => 300,
             'debug' => false,
             'debug_alert_file' => '',
@@ -264,5 +265,16 @@ final class Config
     public function lon(): float
     {
         return (float) $this->get('lon');
+    }
+
+    /** Minimum seconds between tail replays of unchanged NWS alerts. */
+    public function replayHoldSeconds(): int
+    {
+        $hours = $this->get('replay_hours');
+        if ($hours !== null && $hours !== '' && is_numeric($hours) && (float) $hours > 0) {
+            return (int) round((float) $hours * 3600);
+        }
+
+        return max(0, (int) $this->get('hold_minutes', 25)) * 60;
     }
 }

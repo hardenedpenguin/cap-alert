@@ -78,9 +78,9 @@ final class Application
                 $this->logger->line('Quiet hours active (geo hazards muted)');
             }
 
-            $repeatHold = $this->isRepeatHoldActive($scheduled);
+            $repeatHold = $this->isRepeatHoldActive();
             if ($repeatHold) {
-                $this->logger->line('NWS repeat hold active (tail replays suppressed; new alerts still play)');
+                $this->logger->line('NWS replay hold active (unchanged alert tail replays suppressed)');
             }
 
             $alerts = $this->loadAlerts();
@@ -322,21 +322,22 @@ final class Application
         $this->logger->line('Queued tail replay');
     }
 
-    private function isRepeatHoldActive(bool $scheduled): bool
+    private function isRepeatHoldActive(): bool
     {
         $flag = $this->config->path('alert_played_flag');
         if (!is_file($flag)) {
             return false;
         }
 
-        $hold = (int) $this->config->get('hold_minutes', 25);
-        $age = time() - filemtime($flag);
-        if ($age > $hold * 60) {
-            unlink($flag);
+        $holdSeconds = $this->config->replayHoldSeconds();
+        if ($holdSeconds <= 0) {
             return false;
         }
-        if ($scheduled) {
+
+        $age = time() - filemtime($flag);
+        if ($age >= $holdSeconds) {
             unlink($flag);
+
             return false;
         }
 

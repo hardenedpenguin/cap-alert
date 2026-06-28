@@ -10,7 +10,9 @@
 
 ## "Events unchanged" but expected a replay
 
-Tail replay only runs when the events list is unchanged, repeat hold is not active, and no `alert-played.flag` exists. Delete `/var/lib/cap-alert/alert-played.flag` to allow one tail replay.
+Tail replay only runs when the events list is unchanged, the replay hold has expired, and no `alert-played.flag` exists. The hold duration is **`replay_hours`** (default 4) in `config.php`, or legacy **`hold_minutes`** when `replay_hours` is unset.
+
+Delete `/var/lib/cap-alert/alert-played.flag` to allow one tail replay sooner. Logs show `NWS replay hold active` when a replay is being suppressed.
 
 ## Stale or missing NWS data
 

@@ -23,6 +23,7 @@ return [
         'allow_severe' => true,
     ],
     'hold_minutes' => 25,
+    'replay_hours' => 4,
     'alert_cache_seconds' => 300,
     'debug' => false,
     'debug_alert_file' => __DIR__ . '/../test/fixtures/alert.json',

@@ -106,6 +106,17 @@ $assert(str_contains($wfSource, 'maybeSeedHistory'), 'wildfire seeds history on 
 $assert(isset(Config::defaults()['earthquake']), 'earthquake config defaults defined');
 $assert(isset(Config::defaults()['wildfire']), 'wildfire config defaults defined');
 
+$legacyHold = new Config(['hold_minutes' => 30]);
+$assert($legacyHold->replayHoldSeconds() === 1800, 'replay hold falls back to hold_minutes');
+$hoursHold = new Config(['replay_hours' => 2, 'hold_minutes' => 30]);
+$assert($hoursHold->replayHoldSeconds() === 7200, 'replay_hours overrides hold_minutes');
+$nullHours = new Config(['replay_hours' => null, 'hold_minutes' => 15]);
+$assert($nullHours->replayHoldSeconds() === 900, 'null replay_hours uses hold_minutes');
+
+$appSource = file_get_contents(__DIR__ . '/../lib/Application.php') ?: '';
+$assert(!str_contains($appSource, 'if ($scheduled)'), 'scheduled runs respect NWS replay hold');
+$assert(str_contains($appSource, 'replayHoldSeconds'), 'Application uses replay hold seconds');
+
 $audioSource = file_get_contents(__DIR__ . '/../lib/AudioPlayer.php') ?: '';
 $assert(!str_contains($audioSource, 'sudo asterisk'), 'AudioPlayer uses asterisk CLI without sudo');
 $astSource = file_get_contents(__DIR__ . '/../lib/AsteriskControl.php') ?: '';

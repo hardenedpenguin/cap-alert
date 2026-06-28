@@ -39,7 +39,7 @@ if (is_file($target)) {
 /** Top-level keys owned by the debconf wizard (replaced on reconfigure). */
 $wizardKeys = [
     'node', 'lat', 'lon', 'gps', 'tts_key', 'local_playback', 'quiet_hours', 'quiet_hours_window',
-    'hold_minutes', 'cyclone', 'earthquake', 'wildfire', 'pushover', 'pi', 'filtering',
+    'hold_minutes', 'replay_hours', 'cyclone', 'earthquake', 'wildfire', 'pushover', 'pi', 'filtering',
     'tts_voice', 'asterisk', 'with_county_names', 'playback_window', 'repeat_expanded_on_tail',
     'sounds',
 ];

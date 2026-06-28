@@ -45,7 +45,7 @@ db_get cap-alert/quiet_hours || RET=false; quiet_hours="$RET"
 db_get cap-alert/quiet_hours_start || RET="01:00"; quiet_hours_start="$RET"
 db_get cap-alert/quiet_hours_end || RET="07:00"; quiet_hours_end="$RET"
 db_get cap-alert/allow_severe || RET=true; allow_severe="$RET"
-db_get cap-alert/hold_minutes || RET=25; hold_minutes="$RET"
+db_get cap-alert/replay_hours || RET=4; replay_hours="$RET"
 db_get cap-alert/blocked_events || RET=""; blocked_events="$RET"
 db_get cap-alert/tail_message_blocked || RET=""; tail_message_blocked="$RET"
 db_get cap-alert/repeat_expanded_on_tail || RET=false; repeat_expanded_on_tail="$RET"
@@ -160,7 +160,7 @@ return [
         'end' => '$(php_quote "$quiet_hours_end")',
         'allow_severe' => $(php_bool "$allow_severe"),
     ],
-    'hold_minutes' => $(php_quote "$hold_minutes"),
+    'replay_hours' => $(php_quote "$replay_hours"),
     'repeat_expanded_on_tail' => $(php_bool "$repeat_expanded_on_tail"),
     'playback_window' => [
         'start' => $(php_quote "$playback_window_start"),
