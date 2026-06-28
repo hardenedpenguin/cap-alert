@@ -5,7 +5,7 @@ cap-alert (1.0.1-1) unstable; urgency=medium
   * Fix scheduled timer runs clearing the replay hold every poll cycle.
   * Document Piper/asl-tts voice selection and alert replay interval in README.
 
- -- Jory A. Pratt <geekypenguin@gmail.com>  Sun, 28 Jun 2026 11:44:37 -0500
+ -- Jory A. Pratt <geekypenguin@gmail.com>  Sun, 28 Jun 2026 16:50:00 -0500
 
 cap-alert (1.0.0-1) unstable; urgency=medium
 
