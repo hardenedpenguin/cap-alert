@@ -1,0 +1,223 @@
+# CAP-Alert
+
+[![CI](https://github.com/hardenedpenguin/cap-alert/actions/workflows/ci.yml/badge.svg)](https://github.com/hardenedpenguin/cap-alert/actions/workflows/ci.yml)
+
+Weather alert processor for AllStar/Asterisk nodes. Fetches NWS alerts and optional geo hazards (NHC cyclones, USGS earthquakes, NIFC wildfires), builds audio from bundled ulaw sounds and TTS, and plays them on a configured node.
+
+## Install
+
+Current release: **1.0.0-1** ([all releases](https://github.com/hardenedpenguin/cap-alert/releases))
+
+```bash
+wget -O /tmp/cap-alert_1.0.0-1_all.deb \
+  https://github.com/hardenedpenguin/cap-alert/releases/download/v1.0.0-1/cap-alert_1.0.0-1_all.deb
+sudo apt install /tmp/cap-alert_1.0.0-1_all.deb
+sudo cap-alert-configure
+```
+
+Upgrading from **cap-warn**: install `cap-alert`; it replaces `cap-warn` and migrates `/etc/cap-warn`, `/var/lib/cap-warn`, and `/var/log/cap-warn` automatically.
+
+The setup wizard writes `/etc/cap-alert/config.php`. Re-run it anytime to change settings:
+
+```bash
+sudo cap-alert-configure
+```
+
+Test manually with `sudo cap-alert` (the wrapper drops to the `asterisk` user automatically).
+
+CAP-Alert runs as **`asterisk`**, not root: the timer, manual runs, and `net-flag` use the asterisk account. State and logs under `/var/lib/cap-alert/` and `/var/log/cap-alert/` are owned by `asterisk`. Configuration lives in `/etc/cap-alert/` (**`root:asterisk` mode 750**) with **`config.php` mode 640** so only root (via `cap-alert-configure`) and the daemon can read secrets. Only `sudo cap-alert-configure` needs root for debconf. Serial GPS devices are usually in **`dialout`**, which the asterisk account is already a member of on typical AllStar installs.
+## Requirements
+
+- PHP 8.0+ with curl
+- sox
+- asl3-asterisk (AllStarLink 3)
+- libespeak-ng1 (local TTS via asl3-tts / espeak-ng)
+- Optional: gpsd, VoiceRSS API key, Pushover credentials (CPU alarms via kernel thermal/hwmon on Pi, ARM64, and x86_64)
+
+Alert sounds are bundled as **ulaw** and installed to `/usr/share/cap-alert/sounds/`.
+
+## Configuration
+
+Settings live in `/etc/cap-alert/config.php`. Use `sudo cap-alert-configure` rather than editing by hand unless you prefer to.
+
+Re-running the wizard updates wizard-owned keys and **preserves** manual settings such as `alert_hooks`, `expand_descriptions`, and `alert_cache_seconds`. Leave Pushover/VoiceRSS password fields blank on reconfigure to keep existing keys.
+
+The wizard configures: GPS, quiet hours, blocklists, tail blocklist, playback window, hold time, TTS voice, courtesy tone, WX enable, county names, geo hazards, Pushover (including failure/all-clear notifications), and CPU alarm thresholds.
+
+### Core settings
+
+| Setting | Values | Purpose |
+|---------|--------|---------|
+| `node` | AllStar node number (digits) | Node used for `rpt localplay` / `rpt playback` |
+| `lat` / `lon` | Decimal degrees | Static alert location; fallback when GPS has no fix |
+| `gps.enabled` | `true` / `false` | Read coordinates from gpsd or serial GPS each run |
+| `gps.min_satellites` | Integer (default `3`) | Reject fixes with fewer satellites |
+| `gps.max_age_seconds` | Integer (default `120`) | Reject stale gpsd fixes; `0` = any age |
+| `gps.device` | Path or `""` | Optional serial device; empty uses gpsd then auto-detect |
+| `tts_key` | VoiceRSS API key or `""` | Online TTS; empty uses asl3-tts |
+| `local_playback` | `true` / `false` | `true` = `rpt localplay`; `false` = `rpt playback` (hub) |
+| `quiet_hours` | `true` / `false` | When `true`, suppress lower-priority audio during quiet hours |
+| `quiet_hours_window.start` / `.end` | `HH:MM` (default `01:00`–`07:00`) | Local quiet-hours window |
+| `quiet_hours_window.allow_severe` | `true` / `false` | Warnings still play during quiet hours when `true` |
+| `hold_minutes` | Integer (default `25`) | Minutes before repeating the same NWS alert |
+| `alert_cache_seconds` | Integer (default `300`) | Minimum age before re-fetching NWS data |
+| `expand_descriptions` | `true` / `false` | TTS for Special Weather Statements and expanded text |
+| `repeat_expanded_on_tail` | `true` / `false` | Include TTS clip in tail replays |
+| `debug` | `true` / `false` | Use `debug_alert_file` instead of live NWS data |
+| `debug_alert_file` | Path to GeoJSON | Sample alert file for testing |
+
+### GPS location
+
+When `gps.enabled` is `true`, each run tries **gpsd** first (`gpspipe`), then an optional **`gps.device`**, then common USB/serial paths (`/dev/ttyUSB*`, `/dev/ttyACM*`, `/dev/serial/by-id/*`). A valid fix overrides `lat`/`lon` for that run only (config.php is not rewritten). Static coordinates are used when GPS is disabled or no fix passes quality checks.
+
+Install **`gpsd`** and **`gpsd-clients`** on mobile nodes, or set `gps.device` for a direct serial receiver. Serial devices are usually in the **`dialout`** group; the `asterisk` account is typically already a member on AllStar installs.
+
+Run `sudo cap-alert doctor` with GPS enabled to verify gpsd, device access, and a live fix.
+
+### Alert filtering and dedup
+
+| Key | Purpose |
+|-----|---------|
+| `filtering.blocked_events` | Glob patterns (`Rip Current*`, `Dense Fog*`) never announced |
+| `filtering.tail_message_blocked` | Events excluded from tail replays |
+| `filtering.collapse_superseded` | Collapse overlapping NWS products for the same event/county |
+
+Change detection uses alert signatures (event + county codes), not raw headline text.
+
+Example:
+
+```php
+'filtering' => [
+    'blocked_events' => ['Rip Current*', 'Dense Fog Advisory'],
+    'collapse_superseded' => true,
+],
+```
+
+### Alert hooks
+
+Run external commands when alerts change:
+
+```php
+'alert_hooks' => [
+    ['when' => 'new', 'events' => ['Tornado Warning'], 'command' => '/usr/local/bin/tornado-hook.sh'],
+],
+```
+
+Environment: `CAP_ALERT_EVENT`, `CAP_ALERT_PHASE` (`new` or `clear`).
+
+### NHC cyclone feeds
+
+Cyclone monitoring uses the NHC **GIS XML** feeds listed under “Dynamic Feeds” on [NHC RSS](https://www.nhc.noaa.gov/aboutrss.shtml). CAP-Alert parses `<nhc:Cyclone>` entries from these files only.
+
+| `cyclone.feed` | Basin | Typical coverage |
+|----------------|-------|------------------|
+| `/gis-at.xml` | Atlantic / Gulf / Caribbean | LA, TX, MS, AL, FL, GA, SC, NC, VA, MD, NJ, NY, NE, PR |
+| `/gis-ep.xml` | Eastern Pacific | CA, AZ, Mexico Pacific coast |
+| `/gis-cp.xml` | Central Pacific | Hawaii and nearby waters |
+
+Fetched from `https://www.nhc.noaa.gov/<feed>`.
+
+| `cyclone` key | Values | Purpose |
+|---------------|--------|---------|
+| `enabled` | `true` / `false` | Poll NHC when `true` |
+| `feed` | `/gis-at.xml`, `/gis-ep.xml`, `/gis-cp.xml` | Basin GIS feed |
+| `radius_miles` | Integer | Max distance from `lat`/`lon` to announce a storm |
+| `hurricanes_only` | `true` / `false` | Skip tropical storms and depressions |
+| `cache_minutes` | Integer (default `60`) | Re-fetch interval for cyclone data |
+| `max_advisory_age_hours` | Integer (default `5`) | Ignore advisories older than this |
+
+### USGS earthquakes
+
+Earthquake monitoring polls the [USGS FDSN event API](https://earthquake.usgs.gov/fdsnws/event/1/) for recent events near your coordinates. This is separate from NWS alerts (including Earthquake Warning products).
+
+| `earthquake` key | Values | Purpose |
+|------------------|--------|---------|
+| `enabled` | `true` / `false` | Poll USGS when `true` |
+| `min_magnitude` | Float (default `3.5`) | Minimum magnitude to announce |
+| `max_distance_miles` | Integer (default `75`) | Max distance from `lat`/`lon` |
+| `max_event_age_hours` | Integer (default `6`) | Ignore events older than this |
+| `lookback_hours` | Integer (default `24`) | USGS query window |
+| `cache_minutes` | Integer (default `10`) | Re-fetch interval |
+| `max_announcements_per_cycle` | Integer (default `3`) | Cap announcements per run |
+| `announce_history_on_enable` | `true` / `false` | Announce existing events when first enabled |
+| `ignore_automatic_below` | Float or `null` | Skip automatic events below this magnitude |
+
+On first enable, existing in-range events are marked seen without playback unless `announce_history_on_enable` is `true`.
+
+### NIFC wildfires
+
+Wildfire monitoring polls the [NIFC WFIGS interagency perimeter feed](https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0) for large fires near your coordinates. Prescribed burns are excluded by default.
+
+| `wildfire` key | Values | Purpose |
+|----------------|--------|---------|
+| `enabled` | `true` / `false` | Poll WFIGS when `true` |
+| `min_acres` | Float (default `250`) | Minimum fire size to announce |
+| `max_distance_miles` | Integer (default `50`) | Max distance from `lat`/`lon` |
+| `max_discovery_age_hours` | Integer (default `48`) | Ignore older discoveries |
+| `cache_minutes` | Integer (default `15`) | Re-fetch interval |
+| `max_announcements_per_cycle` | Integer (default `3`) | Cap announcements per run |
+| `announce_history_on_enable` | `true` / `false` | Announce existing incidents when first enabled |
+| `exclude_prescribed` | `true` / `false` | Skip prescribed burns (default `true`) |
+
+### Pushover
+
+| `pushover.mode` | Behavior |
+|-----------------|----------|
+| `all` | Weather alerts and CPU temperature alarms (voice + Pushover) |
+| `pi_both` | CPU temp/throttle alarms only (voice + Pushover) |
+| `pi_pushover` | CPU alarms to Pushover only (no voice) |
+
+Leave `user_key` and `api_token` empty to disable Pushover.
+
+### CPU temperature alarms
+
+Enable with `pi.alarms => true` on any host that exposes CPU temperature via Linux thermal or hwmon sysfs (Raspberry Pi, APX Mustang/X-Gene, x86_64, and most ARM64 SBCs).
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `alarms` | `false` | Poll CPU temperature and health flags when `true` |
+| `soft_c` | `65` | Soft temperature warning (°C) |
+| `hot_c` | `75` | High-temperature alarm (°C) |
+| `high_c` | `80` | Critical two-phase alarm threshold (°C) |
+| `label` | `node` | Spoken name before temperature |
+| `daily_alarm_limit` | `10` | Max CPU alarm playbacks per day |
+| `hold_minutes` | `25` | Minimum time between CPU alarm playbacks |
+
+## Commands
+
+```bash
+sudo cap-alert                 # manual run (re-execs as asterisk)
+sudo cap-alert run             # scheduled invocation (clears hold flags)
+sudo cap-alert doctor          # validate config, Asterisk, TTS, caches, timer
+sudo cap-alert-configure       # setup wizard (root; writes config.php)
+sudo net-flag on|off|status   # suppress alerts during nets (/var/lib/cap-alert/linked.flag)
+```
+
+State files (alert cache, counters, hold flags) live under `/var/lib/cap-alert/` (owned by `asterisk`). Playback artifacts written to `/tmp/` for Asterisk `rpt localplay` / `rpt playback` paths.
+
+Scheduled polling uses **cap-alert.timer** (systemd). Check interval is set in the setup wizard (5, 10, or 15 minutes).
+
+```bash
+systemctl status cap-alert.timer    # next run, last result
+journalctl -u cap-alert.service     # recent scheduled runs
+tail -f /var/log/cap-alert/cap-alert.log
+```
+
+Failed runs are logged to `/var/log/cap-alert/failures.log` (includes journal excerpt).
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues.
+
+## Debug
+
+```php
+'debug' => true,
+'debug_alert_file' => '/usr/share/cap-alert/test_alert.json',
+```
+
+## License
+
+Copyright (C) 2026 Jory A. Pratt
+
+CAP-Alert is free software licensed under the [GNU General Public License v3.0 or later](LICENSE) (GPL-3.0-or-later).
+
+See [NOTICE](NOTICE) for third-party services and bundled dependencies.

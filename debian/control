@@ -1,0 +1,35 @@
+Source: cap-alert
+Section: hamradio
+Priority: optional
+Maintainer: Jory A. Pratt <geekypenguin@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/hardenedpenguin/cap-alert
+Vcs-Browser: https://github.com/hardenedpenguin/cap-alert
+Vcs-Git: https://github.com/hardenedpenguin/cap-alert.git
+
+Package: cap-alert
+Architecture: all
+Depends: ${misc:Depends},
+         debconf (>= 0.5) | debconf-2.0,
+         php-cli,
+         php-curl,
+         sox,
+         asl3-asterisk,
+         libespeak-ng1
+Recommends: asl3-tts,
+            logrotate
+Suggests: gpsd,
+          gpsd-clients
+Replaces: cap-warn
+Breaks: cap-warn (<< 1.0.5)
+Provides: cap-warn
+Description: NWS weather alerts for AllStar/Asterisk nodes
+ CAP-Alert fetches National Weather Service alerts (and optional NHC
+ cyclone advisories), builds audio from bundled ulaw sound files and
+ TTS, and plays them on a configured AllStar node.
+ .
+ On install, an interactive setup wizard collects node number, location,
+ and optional features (cyclone tracking, Pushover, CPU temperature alarms).
+ Scheduled polling uses a systemd timer (cap-alert.timer).

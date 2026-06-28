@@ -1,0 +1,10 @@
+[Unit]
+Description=Log CAP-Alert service failure
+
+[Service]
+Type=oneshot
+User=asterisk
+Group=asterisk
+ExecStart=/usr/lib/cap-alert/log-failure
+ProtectSystem=strict
+ReadWritePaths=/var/log/cap-alert

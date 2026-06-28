@@ -1,0 +1,44 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+%:
+	dh $@
+
+override_dh_installsystemd:
+	dh_installsystemd -pcap-alert --name=cap-alert
+
+override_dh_auto_install:
+	install -d debian/cap-alert/usr/share/cap-alert/lib
+	install -d debian/cap-alert/usr/share/cap-alert/sounds
+	install -d debian/cap-alert/usr/bin
+	install -d debian/cap-alert/usr/sbin
+	install -d debian/cap-alert/var/lib/cap-alert/new_sounds
+	install -d debian/cap-alert/var/log/cap-alert
+	install -d debian/cap-alert/etc/cap-alert
+	install -d debian/cap-alert/etc/logrotate.d
+	install -m 644 cap-alert.php debian/cap-alert/usr/share/cap-alert/
+	cp -a lib/. debian/cap-alert/usr/share/cap-alert/lib/
+	install -m 644 sounds/*.ulaw debian/cap-alert/usr/share/cap-alert/sounds/
+	install -m 755 bin/cap-alert debian/cap-alert/usr/bin/
+	install -m 755 bin/net-flag debian/cap-alert/usr/bin/
+	install -m 755 scripts/cap-alert-configure debian/cap-alert/usr/sbin/cap-alert-configure
+	install -d debian/cap-alert/usr/lib/cap-alert
+	install -m 755 scripts/write-config-from-debconf.sh debian/cap-alert/usr/lib/cap-alert/write-config-from-debconf
+	install -m 755 scripts/install-systemd-timer.sh debian/cap-alert/usr/lib/cap-alert/install-systemd-timer
+	install -m 755 scripts/log-failure.sh debian/cap-alert/usr/lib/cap-alert/log-failure
+	install -m 755 scripts/merge-debconf-config.php debian/cap-alert/usr/lib/cap-alert/merge-debconf-config
+	install -m 755 scripts/set-cap-alert-ownership.sh debian/cap-alert/usr/lib/cap-alert/set-cap-alert-ownership
+	install -d debian/cap-alert/usr/share/man/man8
+	install -m 644 debian/cap-alert.8 debian/cap-alert/usr/share/man/man8/
+	install -m 644 debian/cap-alert-configure.8 debian/cap-alert/usr/share/man/man8/
+	install -m 644 debian/net-flag.8 debian/cap-alert/usr/share/man/man8/
+	install -d debian/cap-alert/usr/share/doc/cap-alert
+	install -m 644 docs/TROUBLESHOOTING.md debian/cap-alert/usr/share/doc/cap-alert/TROUBLESHOOTING.md
+	install -m 644 test/fixtures/alert.json debian/cap-alert/usr/share/cap-alert/test_alert.json
+	install -m 644 config/config.debian.php debian/cap-alert/usr/share/cap-alert/config.example.php
+	install -m 644 etc/logrotate.d/cap-alert debian/cap-alert/etc/logrotate.d/cap-alert
+	install -d debian/cap-alert/usr/lib/systemd/system
+	install -m 644 etc/systemd/system/cap-alert.service debian/cap-alert/usr/lib/systemd/system/
+	install -m 644 etc/systemd/system/cap-alert.timer debian/cap-alert/usr/lib/systemd/system/
+	install -m 644 etc/systemd/system/cap-alert-failure.service debian/cap-alert/usr/lib/systemd/system/

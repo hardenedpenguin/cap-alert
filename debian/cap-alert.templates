@@ -1,0 +1,390 @@
+Template: cap-alert/title
+Type: note
+Description: CAP-Alert setup
+ This wizard configures CAP-Alert for your AllStar node. You need your node
+ number and the latitude/longitude used for NWS alert lookups (fallback when
+ GPS is disabled or unavailable).
+ .
+ Optional GPS can override coordinates each run when enabled in the wizard.
+ .
+ You can run this wizard again anytime with:
+   sudo cap-alert-configure
+
+Template: cap-alert/node
+Type: string
+Description: AllStar node number:
+ Enter the node number CAP-Alert uses for rpt localplay / rpt playback.
+ Only digits are allowed (for example 1998).
+
+Template: cap-alert/lat
+Type: string
+Description: Alert latitude (decimal degrees):
+ Enter the latitude for weather alert lookups (for example 30.4515).
+ North America is typically positive; southern hemisphere is negative.
+
+Template: cap-alert/lon
+Type: string
+Description: Alert longitude (decimal degrees):
+ Enter the longitude for weather alert lookups (for example -91.1871).
+ West of Greenwich is negative in the western hemisphere.
+
+Template: cap-alert/gps_enabled
+Type: boolean
+Default: false
+Description: Use GPS for alert location?
+ When enabled, CAP-Alert reads coordinates from gpsd or a serial GPS on each run.
+ The latitude and longitude above are used as fallback when GPS is disabled or
+ has no valid fix.
+
+Template: cap-alert/gps_min_satellites
+Type: string
+Default: 3
+Description: GPS minimum satellites:
+ Fixes with fewer satellites in view are rejected.
+
+Template: cap-alert/gps_max_age_seconds
+Type: string
+Default: 120
+Description: GPS maximum fix age (seconds):
+ gpsd fixes older than this are rejected. Use 0 to accept any age.
+
+Template: cap-alert/gps_device
+Type: string
+Description: GPS serial device (optional):
+ Leave blank to use gpsd or auto-detect USB/serial devices.
+ Example: /dev/ttyUSB0
+
+Template: cap-alert/local_playback
+Type: boolean
+Default: true
+Description: Play alerts on this node locally?
+ When enabled, CAP-Alert uses "rpt localplay" on this machine.
+ Disable for a hub that uses "rpt playback" to reach remote nodes.
+
+Template: cap-alert/quiet_hours
+Type: boolean
+Default: false
+Description: Suppress audio during quiet hours?
+ When enabled, lower-priority audio is suppressed during the configured
+ quiet-hours window. Warnings can still play when "allow severe" is enabled.
+
+Template: cap-alert/quiet_hours_start
+Type: string
+Default: 01:00
+Description: Quiet hours start (local time HH:MM):
+ Alerts and geo hazards are muted from this time until quiet hours end.
+
+Template: cap-alert/quiet_hours_end
+Type: string
+Default: 07:00
+Description: Quiet hours end (local time HH:MM):
+
+Template: cap-alert/allow_severe
+Type: boolean
+Default: true
+Description: Allow warnings during quiet hours?
+ When enabled, NWS warnings and severe/extreme alerts still play overnight.
+
+Template: cap-alert/hold_minutes
+Type: string
+Default: 25
+Description: Minutes before repeating the same NWS alert:
+
+Template: cap-alert/blocked_events
+Type: string
+Default: 
+Description: Blocked NWS event patterns (optional):
+ Comma-separated globs to never announce (for example
+ "Rip Current*,Dense Fog Advisory").
+
+Template: cap-alert/tail_message_blocked
+Type: string
+Default: 
+Description: Blocked tail-replay patterns (optional):
+ Comma-separated globs excluded from tail replays only (for example
+ "Special Weather Statement").
+
+Template: cap-alert/repeat_expanded_on_tail
+Type: boolean
+Default: false
+Description: Include TTS description in tail replays?
+ When enabled, expanded weather text is appended to tail audio files.
+
+Template: cap-alert/playback_window_start
+Type: string
+Default: 10
+Description: Playback window start (minute of hour, 0-59):
+ Alert audio is not played before this minute each hour (except debug mode).
+
+Template: cap-alert/playback_window_end
+Type: string
+Default: 50
+Description: Playback window end (minute of hour, 0-59):
+
+Template: cap-alert/alert_sound_intro
+Type: string
+Default: 
+Description: Custom alert intro sound (optional):
+ Sound name for playback intro (for example "strong click"). Leave blank for default.
+
+Template: cap-alert/alert_sound_outro
+Type: string
+Default: 
+Description: Custom alert outro sound (optional):
+ Sound name after alert content. Leave blank for default silence.
+
+Template: cap-alert/wx_enable_on_severe
+Type: boolean
+Default: false
+Description: Enable WX transmit on severe warnings?
+ When enabled, CAP-Alert runs "radio tune" before warning playback.
+
+Template: cap-alert/tts_key
+Type: password
+Description: VoiceRSS API key (optional):
+ Leave blank to use asl3-tts for text-to-speech instead of
+ the VoiceRSS online service.
+
+Template: cap-alert/tts_voice
+Type: string
+Default: 
+Description: asl3-tts / Piper voice name (optional):
+ Passed to asl3-tts when synthesizing speech locally.
+
+Template: cap-alert/courtesy_tone
+Type: boolean
+Default: false
+Description: Send courtesy tone before severe warnings?
+ When enabled, CAP-Alert sends a DTMF courtesy tone before warning playback.
+
+Template: cap-alert/with_county_names
+Type: boolean
+Default: false
+Description: Include county names in alert audio?
+ Uses pre-recorded county clips when available in sound directories.
+
+Template: cap-alert/cyclone_enabled
+Type: boolean
+Default: false
+Description: Monitor NHC tropical cyclone advisories?
+ When enabled, CAP-Alert polls the National Hurricane Center GIS feed for
+ storms within the configured radius of your location.
+
+Template: cap-alert/cyclone_feed
+Type: select
+Choices: Atlantic/Gulf/Caribbean, Eastern Pacific, Central Pacific
+Default: Atlantic/Gulf/Caribbean
+Description: NHC cyclone basin:
+ Choose the basin closest to your node. This selects which NHC GIS XML
+ feed is polled.
+
+Template: cap-alert/cyclone_radius
+Type: string
+Default: 1000
+Description: Cyclone alert radius (miles):
+ Storms farther than this distance from your coordinates are ignored.
+
+Template: cap-alert/cyclone_hurricanes_only
+Type: boolean
+Default: false
+Description: Cyclones: hurricanes only?
+ When enabled, tropical storms and depressions are ignored.
+
+Template: cap-alert/earthquake_enabled
+Type: boolean
+Default: false
+Description: Monitor USGS earthquakes near your location?
+ When enabled, CAP-Alert polls the USGS earthquake feed for events within
+ the configured radius and minimum magnitude.
+
+Template: cap-alert/earthquake_min_magnitude
+Type: string
+Default: 3.5
+Description: Minimum earthquake magnitude:
+ Events below this magnitude are ignored (for example 3.5).
+
+Template: cap-alert/earthquake_radius
+Type: string
+Default: 75
+Description: Earthquake alert radius (miles):
+ Events farther than this distance from your coordinates are ignored.
+
+Template: cap-alert/earthquake_history_on_enable
+Type: boolean
+Default: false
+Description: Announce existing earthquakes when first enabled?
+ When disabled, in-range events at enable time are marked seen without playback.
+
+Template: cap-alert/wildfire_enabled
+Type: boolean
+Default: false
+Description: Monitor NIFC wildfire perimeters near your location?
+ When enabled, CAP-Alert polls the NIFC WFIGS interagency fire perimeter
+ feed for large fires within the configured radius.
+
+Template: cap-alert/wildfire_radius
+Type: string
+Default: 50
+Description: Wildfire alert radius (miles):
+ Fires farther than this distance from your coordinates are ignored.
+
+Template: cap-alert/wildfire_min_acres
+Type: string
+Default: 250
+Description: Minimum wildfire size (acres):
+ Smaller incidents are ignored (for example 250).
+
+Template: cap-alert/wildfire_exclude_prescribed
+Type: boolean
+Default: true
+Description: Exclude prescribed burns from wildfire alerts?
+
+Template: cap-alert/wildfire_history_on_enable
+Type: boolean
+Default: false
+Description: Announce existing wildfires when first enabled?
+
+Template: cap-alert/pushover_enable
+Type: boolean
+Default: false
+Description: Send notifications via Pushover?
+ Enable to deliver weather and CPU alarm notifications through Pushover.
+ Requires a Pushover user key and application API token.
+
+Template: cap-alert/pushover_mode
+Type: select
+Choices: all, pi_both, pi_pushover
+Default: all
+Description: Pushover notification mode:
+ .
+ all — weather alerts and CPU alarms
+ .
+ pi_both — CPU alarms only (voice and Pushover)
+ .
+ pi_pushover — CPU alarms to Pushover only
+
+Template: cap-alert/pushover_user_key
+Type: password
+Description: Pushover user key:
+ Your Pushover user key (leave blank to skip Pushover).
+
+Template: cap-alert/pushover_api_token
+Type: password
+Description: Pushover application API token:
+ API token for your Pushover application (leave blank to skip Pushover).
+
+Template: cap-alert/pushover_notify_failure
+Type: boolean
+Default: false
+Description: Pushover when cap-alert.service fails?
+ Sends a notification if a scheduled run fails (see failures.log).
+
+Template: cap-alert/pushover_notify_all_clear
+Type: boolean
+Default: false
+Description: Pushover on all-clear?
+ Sends a notification when active NWS alerts end.
+
+Template: cap-alert/pi_alarms
+Type: boolean
+Default: false
+Description: Enable CPU temperature and health alarms?
+ When enabled, CAP-Alert announces high CPU temperature and platform
+ health flags (throttling, undervoltage on Pi, critical thermal alarms).
+ Uses Linux thermal and hwmon sysfs on Raspberry Pi, APX Mustang/X-Gene,
+ x86_64, and other ARM64 hosts.
+
+Template: cap-alert/pi_soft_c
+Type: string
+Default: 65
+Description: CPU soft temperature warning (C):
+
+Template: cap-alert/pi_hot_c
+Type: string
+Default: 75
+Description: CPU high temperature alarm (C):
+
+Template: cap-alert/pi_high_c
+Type: string
+Default: 80
+Description: CPU critical temperature alarm (C):
+
+Template: cap-alert/pi_hold_minutes
+Type: string
+Default: 25
+Description: Minutes between CPU alarm playbacks:
+
+Template: cap-alert/pi_daily_limit
+Type: string
+Default: 10
+Description: Maximum CPU alarm playbacks per day:
+
+Template: cap-alert/cron_interval
+Type: select
+Choices: 5, 10, 15
+Default: 10
+Description: Alert check interval (minutes):
+ How often CAP-Alert polls for new alerts via the cap-alert.timer systemd unit.
+
+Template: cap-alert/invalid_node
+Type: error
+Description: Invalid node number
+ The node number must contain digits only (for example 1998).
+
+Template: cap-alert/invalid_lat
+Type: error
+Description: Invalid latitude
+ Enter a decimal latitude between -90 and 90 (for example 30.4515).
+
+Template: cap-alert/invalid_lon
+Type: error
+Description: Invalid longitude
+ Enter a decimal longitude between -180 and 180 (for example -91.1871).
+
+Template: cap-alert/invalid_gps_min_satellites
+Type: error
+Description: Invalid GPS minimum satellites
+ Enter an integer from 1 to 30.
+
+Template: cap-alert/invalid_gps_max_age
+Type: error
+Description: Invalid GPS fix age
+ Enter an integer from 0 to 86400 (seconds).
+
+Template: cap-alert/invalid_cyclone_radius
+Type: error
+Description: Invalid cyclone radius
+ Enter a positive integer number of miles (for example 500 or 1000).
+
+Template: cap-alert/invalid_earthquake_radius
+Type: error
+Description: Invalid earthquake radius
+ Enter a positive integer number of miles (for example 50 or 75).
+
+Template: cap-alert/invalid_wildfire_radius
+Type: error
+Description: Invalid wildfire radius
+ Enter a positive integer number of miles (for example 25 or 50).
+
+Template: cap-alert/invalid_wildfire_acres
+Type: error
+Description: Invalid wildfire acreage
+ Enter a positive integer number of acres (for example 100 or 250).
+
+Template: cap-alert/invalid_hold_minutes
+Type: error
+Description: Invalid hold minutes
+ Enter a positive integer number of minutes (for example 25 or 30).
+
+Template: cap-alert/invalid_playback_minute
+Type: error
+Description: Invalid playback window minute
+ Enter an integer from 0 to 59 (for example 10 or 50).
+
+Template: cap-alert/setup_complete
+Type: note
+Description: CAP-Alert configured
+ Configuration was written to /etc/cap-alert/config.php.
+ .
+ Test manually with: sudo cap-alert
+ Re-run this wizard with: sudo cap-alert-configure

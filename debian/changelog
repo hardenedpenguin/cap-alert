@@ -1,0 +1,8 @@
+cap-alert (1.0.0-1) unstable; urgency=medium
+
+  * Initial release as cap-alert (renamed from cap-warn).
+  * Replaces cap-warn with automatic migration of config, state, logs, and timer.
+  * Same feature set: NWS alerts, geo hazards, GPS, quiet hours, Pushover, and
+    asterisk-user runtime with hardened permissions.
+
+ -- Jory A. Pratt <geekypenguin@gmail.com>  Sun, 28 Jun 2026 12:00:00 -0500

@@ -1,0 +1,13 @@
+.TH CAP-WARN-CONFIGURE 8 "June 2026" "cap-alert 1.0.4" "System Administration"
+.SH NAME
+cap-alert-configure \- interactive CAP-Alert setup wizard
+.SH SYNOPSIS
+.B cap-alert-configure
+.SH DESCRIPTION
+Runs the Debian debconf wizard for CAP-Alert. Writes /etc/cap-alert/config.php
+and installs the systemd timer interval.
+.PP
+Re-running the wizard updates wizard-owned settings and preserves manually
+edited keys such as alert hooks, playback window, and advanced tuning.
+.SH SEE ALSO
+.BR cap-alert (8)

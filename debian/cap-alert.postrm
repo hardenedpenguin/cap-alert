@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+	purge)
+		if [ -f /etc/cap-alert/config.php ]; then
+			rm -f /etc/cap-alert/config.php
+		fi
+		if [ -d /etc/cap-alert ] && [ -z "$(ls -A /etc/cap-alert 2>/dev/null)" ]; then
+			rmdir /etc/cap-alert 2>/dev/null || true
+		fi
+		rm -f /etc/cron.d/cap-alert /etc/cron.d/cap-alert.disabled
+		rm -f /etc/cron.d/cap-warn /etc/cron.d/cap-warn.disabled
+		rm -f /etc/systemd/system/cap-alert.timer.d/interval.conf
+		rmdir /etc/systemd/system/cap-alert.timer.d 2>/dev/null || true
+		;;
+	*)
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,147 @@
+#!/bin/sh
+set -e
+
+CONFIG="/etc/cap-alert/config.php"
+STATE="/var/lib/cap-alert"
+LOG="/var/log/cap-alert"
+WRITE_CONFIG="/usr/lib/cap-alert/write-config-from-debconf"
+INSTALL_TIMER="/usr/lib/cap-alert/install-systemd-timer"
+LEGACY_CRON="/etc/cron.d/cap-alert"
+OLD_CRON="/etc/cron.d/cap-warn"
+
+migrate_from_cap_warn() {
+	old_config="/etc/cap-warn/config.php"
+	old_state="/var/lib/cap-warn"
+	old_log="/var/log/cap-warn"
+
+	if [ -f "$old_config" ] && [ ! -f "$CONFIG" ]; then
+		install -d -m 750 /etc/cap-alert
+		mv "$old_config" "$CONFIG"
+	fi
+	if [ -d /etc/cap-warn ] && [ -z "$(ls -A /etc/cap-warn 2>/dev/null)" ]; then
+		rmdir /etc/cap-warn 2>/dev/null || true
+	fi
+
+	if [ -d "$old_state" ] && [ ! -e "$STATE" ]; then
+		mv "$old_state" "$STATE"
+	fi
+
+	if [ -d "$old_log" ] && [ ! -e "$LOG" ]; then
+		mv "$old_log" "$LOG"
+	fi
+
+	if [ -f "$CONFIG" ]; then
+		sed -i 's/cap-warn/cap-alert/g' "$CONFIG" 2>/dev/null || true
+	fi
+
+	if [ -f /etc/systemd/system/cap-warn.timer.d/interval.conf ] && \
+		[ ! -f /etc/systemd/system/cap-alert.timer.d/interval.conf ]; then
+		install -d /etc/systemd/system/cap-alert.timer.d
+		cp /etc/systemd/system/cap-warn.timer.d/interval.conf \
+			/etc/systemd/system/cap-alert.timer.d/interval.conf
+	fi
+
+	systemctl disable --now cap-warn.timer 2>/dev/null || true
+	systemctl reset-failed cap-warn.service 2>/dev/null || true
+	rm -rf /etc/systemd/system/cap-warn.timer.d 2>/dev/null || true
+
+	rm -f /etc/cron.d/cap-warn /etc/cron.d/cap-warn.disabled 2>/dev/null || true
+}
+
+install_runtime_dirs() {
+	/usr/lib/cap-alert/set-cap-alert-ownership 2>/dev/null || {
+		install -d -m 750 "$STATE"
+		install -d -m 750 "$STATE/cache"
+		install -d -m 750 "$STATE/new_sounds"
+		install -d -m 755 "$LOG"
+		install -d -m 750 /etc/cap-alert
+	}
+	# Migrate legacy link-mute flag from /tmp.
+	if [ -f /tmp/linked_true.txt ] && [ ! -f "$STATE/linked.flag" ]; then
+		mv /tmp/linked_true.txt "$STATE/linked.flag"
+		chmod 640 "$STATE/linked.flag" 2>/dev/null || true
+	fi
+	# Legacy cap-warn state path.
+	if [ -f /var/lib/cap-warn/linked.flag ] && [ ! -f "$STATE/linked.flag" ]; then
+		mv /var/lib/cap-warn/linked.flag "$STATE/linked.flag"
+		chmod 640 "$STATE/linked.flag" 2>/dev/null || true
+	fi
+}
+
+config_needs_setup() {
+	if [ ! -f "$CONFIG" ]; then
+		return 0
+	fi
+	grep -q "'node' => ''" "$CONFIG" 2>/dev/null
+}
+
+write_config_from_debconf() {
+	if [ -x "$WRITE_CONFIG" ] && "$WRITE_CONFIG"; then
+		return 0
+	fi
+	return 1
+}
+
+install_example_config() {
+	if [ -f /usr/share/cap-alert/config.example.php ]; then
+		install -m 640 /usr/share/cap-alert/config.example.php "$CONFIG"
+	else
+		tmp="$(mktemp)"
+		cat >"$tmp" <<'EOF'
+<?php
+return [
+    'node' => '',
+    'lat' => '',
+    'lon' => '',
+];
+EOF
+		install -m 640 "$tmp" "$CONFIG"
+		rm -f "$tmp"
+	fi
+	echo "cap-alert: run 'sudo cap-alert-configure' to complete setup." >&2
+}
+
+harden_config_permissions() {
+	/usr/lib/cap-alert/set-cap-alert-ownership 2>/dev/null || {
+		if [ -f "$CONFIG" ]; then
+			chmod 640 "$CONFIG" 2>/dev/null || true
+		fi
+	}
+}
+
+remove_legacy_cron() {
+	rm -f "$LEGACY_CRON" "${LEGACY_CRON}.disabled" "$OLD_CRON" "${OLD_CRON}.disabled" 2>/dev/null || true
+}
+
+install_default_timer() {
+	if [ -x "$INSTALL_TIMER" ]; then
+		if [ ! -f /etc/systemd/system/cap-alert.timer.d/interval.conf ]; then
+			"$INSTALL_TIMER" 10
+		fi
+	fi
+}
+
+case "$1" in
+	configure)
+		migrate_from_cap_warn
+		install_runtime_dirs
+		if config_needs_setup; then
+			if ! write_config_from_debconf; then
+				if [ ! -f "$CONFIG" ]; then
+					install_example_config
+				fi
+			fi
+		fi
+		remove_legacy_cron
+		install_default_timer
+		harden_config_permissions
+		;;
+	abort-upgrade|abort-remove|abort-deconfigure)
+		;;
+	*)
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

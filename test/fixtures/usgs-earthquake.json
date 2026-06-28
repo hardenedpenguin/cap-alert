@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "us7000test01",
+      "properties": {
+        "mag": 4.2,
+        "place": "5 km W of Testville, TX",
+        "time": 1700000000000,
+        "updated": 1700000100000,
+        "status": "reviewed",
+        "tsunami": 0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-95.26, 29.42, 10.0]
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+#!/bin/bash
+# Toggle link/net mute flag used during nets (runs as asterisk).
+set -euo pipefail
+
+FLAG="/var/lib/cap-alert/linked.flag"
+LEGACY="/tmp/linked_true.txt"
+RUN_USER="${CAP_ALERT_USER:-asterisk}"
+
+run_as_asterisk() {
+  if [[ $EUID -eq 0 ]]; then
+    if ! id "$RUN_USER" >/dev/null 2>&1; then
+      echo "User $RUN_USER not found" >&2
+      exit 1
+    fi
+    exec sudo -u "$RUN_USER" -- "$0" "$@"
+  fi
+  if [[ "$(id -un)" != "$RUN_USER" ]]; then
+    echo "Run as $RUN_USER: sudo -u $RUN_USER $0 $*" >&2
+    exit 1
+  fi
+}
+
+run_as_asterisk "$@"
+
+mkdir -p /var/lib/cap-alert
+
+if [[ -f "$LEGACY" && ! -f "$FLAG" ]]; then
+  mv "$LEGACY" "$FLAG"
+fi
+
+case "${1:-}" in
+  on)  touch "$FLAG"; echo "net-flag: on ($FLAG)" ;;
+  off) rm -f "$FLAG"; echo "net-flag: off" ;;
+  toggle)
+    if [[ -f "$FLAG" ]]; then rm -f "$FLAG"; echo "net-flag: off"; else touch "$FLAG"; echo "net-flag: on ($FLAG)"; fi
+    ;;
+  status)
+    [[ -f "$FLAG" ]] && echo "net-flag: on ($FLAG)" || echo "net-flag: off"
+    ;;
+  *) echo "usage: $0 {on|off|toggle|status}" >&2; exit 1 ;;
+esac

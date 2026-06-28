@@ -1,0 +1,20 @@
+Third-party components
+======================
+
+VoiceRSS API client (lib/VoiceRss.php)
+  Uses the VoiceRSS text-to-speech HTTP API.
+  Service terms: https://www.voicerss.org/
+  You must supply your own API key to use that service.
+
+External data sources
+  - api.weather.gov (NWS alerts)
+  - www.nhc.noaa.gov (optional cyclone advisories)
+  - earthquake.usgs.gov (optional USGS earthquake feed)
+  - services3.arcgis.com (optional NIFC WFIGS wildfire perimeters)
+
+External runtime dependencies (not bundled)
+  - PHP, sox, Asterisk/AllStar, libespeak-ng1
+  - Optional: gpsd, asl3-tts, Pushover (CPU alarms via Linux thermal/hwmon on Pi, ARM64, x86_64)
+
+Sound files are shipped as `.ulaw` in `sounds/` and installed to `/usr/share/cap-alert/sounds/`.
+Optional fallbacks: Asterisk wx/digits/silence/rpt directories (ulaw only).

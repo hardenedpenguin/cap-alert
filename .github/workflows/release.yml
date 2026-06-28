@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            debhelper \
+            devscripts \
+            lintian \
+            php-cli \
+            php-curl \
+            shellcheck
+
+      - name: Verify tag matches debian/changelog
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          deb_version="$(dpkg-parsechangelog -S Version)"
+          upstream="${deb_version%-*}"
+          if [ "$tag" != "$deb_version" ] && [ "$tag" != "$upstream" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} must match debian/changelog version ${deb_version} or upstream ${upstream}"
+            exit 1
+          fi
+          echo "version=${upstream}" >> "$GITHUB_OUTPUT"
+          echo "deb_version=${deb_version}" >> "$GITHUB_OUTPUT"
+        id: version
+
+      - name: Build and validate package
+        run: bash scripts/ci-check.sh
+
+      - name: Prepare release notes
+        id: notes
+        run: |
+          {
+            echo 'body<<EOF'
+            dpkg-parsechangelog -c1
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: cap-alert ${{ steps.version.outputs.deb_version }}
+          body: ${{ steps.notes.outputs.body }}
+          files: |
+            artifacts/cap-alert_${{ steps.version.outputs.deb_version }}_all.deb
+            artifacts/cap-alert_${{ steps.version.outputs.deb_version }}_amd64.changes
+          generate_release_notes: false
+
+      - name: Update README install version on main
+        env:
+          DEB_VERSION: ${{ steps.version.outputs.deb_version }}
+        run: |
+          bash scripts/update-readme-version.sh "$DEB_VERSION"
+          cp README.md /tmp/README.md.release
+          git fetch origin main
+          git checkout main
+          cp /tmp/README.md.release README.md
+          if git diff --quiet README.md; then
+            echo "README already lists ${DEB_VERSION}"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Update README install instructions for ${DEB_VERSION}."
+          git push origin main

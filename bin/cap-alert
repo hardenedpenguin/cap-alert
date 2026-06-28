@@ -1,0 +1,24 @@
+#!/bin/bash
+# Run CAP-Alert as the asterisk user (drops from root automatically).
+set -euo pipefail
+
+PHP="${PHP:-/usr/bin/php}"
+APP="${CAP_ALERT_HOME:-/usr/share/cap-alert}/cap-alert.php"
+RUN_USER="${CAP_ALERT_USER:-asterisk}"
+
+cd / || true
+
+if [[ $EUID -eq 0 ]]; then
+  if ! id "$RUN_USER" >/dev/null 2>&1; then
+    echo "User $RUN_USER not found (install asl3-asterisk)" >&2
+    exit 1
+  fi
+  exec sudo -u "$RUN_USER" -- "$PHP" "$APP" "$@"
+fi
+
+if [[ "$(id -un)" != "$RUN_USER" ]]; then
+  echo "Run as $RUN_USER: sudo -u $RUN_USER $0" >&2
+  exit 1
+fi
+
+exec "$PHP" "$APP" "$@"

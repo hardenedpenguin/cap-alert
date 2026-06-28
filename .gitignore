@@ -1,0 +1,15 @@
+# Debian package build artifacts
+artifacts/
+debian/cap-alert/
+debian/.debhelper/
+debian/files
+debian/*.substvars
+debian/*.debhelper
+debian/*.debhelper.log
+debian/debhelper-build-stamp
+../cap-alert_*
+../*.deb
+../*.changes
+../*.buildinfo
+../*.dsc
+../*.tar.*

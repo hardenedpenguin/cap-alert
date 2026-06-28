@@ -1,0 +1,14 @@
+.TH NET-FLAG 8 "June 2026" "cap-alert 1.0.4" "System Administration"
+.SH NAME
+net-flag \- suppress CAP-Alert alerts during nets
+.SH SYNOPSIS
+.B net-flag
+.B on|off|status
+.SH DESCRIPTION
+Creates or clears /var/lib/cap-alert/linked.flag. While the flag is present,
+.B cap-alert
+skips alert playback so nets are not interrupted.
+.PP
+Like \fBcap-alert\fR, accepts \fBsudo net-flag\fR and runs as the \fBasterisk\fR user.
+.SH SEE ALSO
+.BR cap-alert (8)

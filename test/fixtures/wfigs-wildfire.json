@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "1",
+      "properties": {
+        "poly_IncidentName": "Test Fire",
+        "poly_GISAcres": 500,
+        "attr_PercentContained": 25,
+        "attr_FireDiscoveryDateTime": "2024-06-01T12:00:00Z",
+        "poly_FeatureCategory": "Wildfire",
+        "poly_IrwinID": "test-fire-1",
+        "attr_IncidentTypeKind": "WF"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-95.27, 29.41],
+            [-95.25, 29.41],
+            [-95.25, 29.43],
+            [-95.27, 29.43],
+            [-95.27, 29.41]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+.TH CAP-WARN 8 "June 2026" "cap-alert 1.0.4" "System Administration"
+.SH NAME
+cap-alert \- NWS weather alert processor for AllStar/Asterisk nodes
+.SH SYNOPSIS
+.B cap-alert
+[\fIcommand\fR]
+.SH DESCRIPTION
+.B cap-alert
+polls National Weather Service alerts and optional geo hazards, builds
+ulaw audio with bundled sounds and text-to-speech, and plays announcements
+on a configured AllStar node.
+.PP
+Scheduled polling is normally handled by \fBcap-alert.timer\fR (systemd), which runs
+\fBcap-alert run\fR as the \fBasterisk\fR user.
+.PP
+The \fBcap-alert\fR wrapper accepts root invocation (\fBsudo cap-alert\fR) and re-executes
+as \fBasterisk\fR; direct use requires the asterisk account.
+.SH COMMANDS
+.TP
+.B (none)
+Run once manually (same as interactive test).
+.TP
+.B run
+Scheduled invocation; clears repeat-hold flags before running.
+.TP
+.B doctor
+Validate configuration, Asterisk connectivity, TTS backends, caches, and timer.
+.SH FILES
+/etc/cap-alert/config.php
+.br
+/var/lib/cap-alert/
+.br
+/var/log/cap-alert/cap-alert.log
+.SH SEE ALSO
+.BR cap-alert-configure (8),
+.BR net-flag (8),
+.BR cap-alert.timer (5)

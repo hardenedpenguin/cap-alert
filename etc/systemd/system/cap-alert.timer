@@ -1,0 +1,9 @@
+[Unit]
+Description=Run CAP-Alert on a schedule
+
+[Timer]
+OnCalendar=*:02/10
+Persistent=true
+
+[Install]
+WantedBy=timers.target

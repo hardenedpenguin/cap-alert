@@ -1,0 +1,7 @@
+/var/log/cap-alert/*.log {
+    daily
+    rotate 14
+    compress
+    missingok
+    notifempty
+}
