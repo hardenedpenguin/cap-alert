@@ -81,3 +81,9 @@ jobs:
           git add README.md
           git commit -m "Update README install instructions for ${DEB_VERSION}."
           git push origin main
+
+  publish-apt-repo:
+    needs: release
+    uses: hardenedpenguin/hardenedpenguin-apt/.github/workflows/dispatch-apt-publish.yml@main
+    secrets:
+      APT_REPO_DISPATCH_TOKEN: ${{ secrets.APT_REPO_DISPATCH_TOKEN }}

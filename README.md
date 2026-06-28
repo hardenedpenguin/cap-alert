@@ -8,6 +8,19 @@ Weather alert processor for AllStar/Asterisk nodes. Fetches NWS alerts and optio
 
 Current release: **1.0.0-1** ([all releases](https://github.com/hardenedpenguin/cap-alert/releases))
 
+From the [hardenedpenguin APT repository](https://github.com/hardenedpenguin/hardenedpenguin-apt) (recommended if you use other hardenedpenguin packages):
+
+```bash
+cd /tmp
+curl -fsSLO https://hardenedpenguin.github.io/hardenedpenguin-apt/pool/main/h/hardenedpenguin-archive-keyring/hardenedpenguin-archive-keyring_1.0_all.deb
+sudo apt install ./hardenedpenguin-archive-keyring_1.0_all.deb
+sudo apt update
+sudo apt install cap-alert
+sudo cap-alert-configure
+```
+
+Or install the release `.deb` directly:
+
 ```bash
 wget -O /tmp/cap-alert_1.0.0-1_all.deb \
   https://github.com/hardenedpenguin/cap-alert/releases/download/v1.0.0-1/cap-alert_1.0.0-1_all.deb
