@@ -7,7 +7,7 @@
 
 Weather alert processor for AllStar/Asterisk nodes. Fetches NWS alerts and optional geo hazards (NHC cyclones, USGS earthquakes, NIFC wildfires), builds audio from bundled ulaw sounds and TTS, and plays them on a configured node.
 
-**Current release:** **1.0.0-1** ([all releases](https://github.com/hardenedpenguin/cap-alert/releases))
+**Current release:** **1.0.1-1** ([all releases](https://github.com/hardenedpenguin/cap-alert/releases))
 
 ## Install
 
