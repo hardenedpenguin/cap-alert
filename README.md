@@ -1,14 +1,17 @@
 # CAP-Alert
 
 [![CI](https://github.com/hardenedpenguin/cap-alert/actions/workflows/ci.yml/badge.svg)](https://github.com/hardenedpenguin/cap-alert/actions/workflows/ci.yml)
+![Release](https://img.shields.io/github/v/release/hardenedpenguin/cap-alert?style=flat-square)
+[![APT repository](https://img.shields.io/badge/apt-hardenedpenguin.github.io-blue?logo=github)](https://hardenedpenguin.github.io/hardenedpenguin-apt/)
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 Weather alert processor for AllStar/Asterisk nodes. Fetches NWS alerts and optional geo hazards (NHC cyclones, USGS earthquakes, NIFC wildfires), builds audio from bundled ulaw sounds and TTS, and plays them on a configured node.
 
+**Current release:** **1.0.0-1** ([all releases](https://github.com/hardenedpenguin/cap-alert/releases))
+
 ## Install
 
-Current release: **1.0.0-1** ([all releases](https://github.com/hardenedpenguin/cap-alert/releases))
-
-From the [hardenedpenguin APT repository](https://github.com/hardenedpenguin/hardenedpenguin-apt) (recommended if you use other hardenedpenguin packages):
+**APT repository (recommended):** one-time setup adds the signing key and `sources.list` entry ([hardenedpenguin-apt](https://github.com/hardenedpenguin/hardenedpenguin-apt)). Supports `amd64` and `arm64`.
 
 ```bash
 cd /tmp
@@ -19,7 +22,9 @@ sudo apt install cap-alert
 sudo cap-alert-configure
 ```
 
-Or install the release `.deb` directly:
+After the keyring is installed, use **`apt install`**, **`apt upgrade`**, and **`apt remove`** for cap-alert like any other package.
+
+**Or** download `cap-alert_*_all.deb` from [Releases](https://github.com/hardenedpenguin/cap-alert/releases) and install locally:
 
 ```bash
 wget -O /tmp/cap-alert_1.0.0-1_all.deb \
@@ -39,6 +44,7 @@ sudo cap-alert-configure
 Test manually with `sudo cap-alert` (the wrapper drops to the `asterisk` user automatically).
 
 CAP-Alert runs as **`asterisk`**, not root: the timer, manual runs, and `net-flag` use the asterisk account. State and logs under `/var/lib/cap-alert/` and `/var/log/cap-alert/` are owned by `asterisk`. Configuration lives in `/etc/cap-alert/` (**`root:asterisk` mode 750**) with **`config.php` mode 640** so only root (via `cap-alert-configure`) and the daemon can read secrets. Only `sudo cap-alert-configure` needs root for debconf. Serial GPS devices are usually in **`dialout`**, which the asterisk account is already a member of on typical AllStar installs.
+
 ## Requirements
 
 - PHP 8.0+ with curl

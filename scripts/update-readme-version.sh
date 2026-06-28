@@ -14,7 +14,8 @@ fi
 
 tmp="$(mktemp)"
 sed \
-  -e "s|Current release: \\*\\*[^*]*\\*\\*|Current release: **${DEB_VERSION}**|" \
+  -e "s|\\*\\*Current release:\\*\\* \\*\\*[^*]*\\*\\*|**Current release:** **${DEB_VERSION}**|" \
+  -e "s|Current release: \\*\\*[^*]*\\*\\*|**Current release:** **${DEB_VERSION}**|" \
   -e "s|wget -O /tmp/cap-alert_[^ ]*_all\\.deb|wget -O /tmp/cap-alert_${DEB_VERSION}_all.deb|" \
   -e "s|${BASE_URL%/*}/v[^/]*/cap-alert_[^ ]*_all\\.deb|${BASE_URL}/cap-alert_${DEB_VERSION}_all.deb|" \
   -e "s|https://github.com/hardenedpenguin/cap-alert/releases/download/v[^/]*/cap-alert_[^ ]*_all\\.deb|${BASE_URL}/cap-alert_${DEB_VERSION}_all.deb|" \
