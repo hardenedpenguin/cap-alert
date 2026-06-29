@@ -1,6 +1,7 @@
 # CAP-Alert
 
 [![CI](https://github.com/hardenedpenguin/cap-alert/actions/workflows/ci.yml/badge.svg)](https://github.com/hardenedpenguin/cap-alert/actions/workflows/ci.yml)
+![GitHub total downloads](https://img.shields.io/github/downloads/hardenedpenguin/cap-alert/total?style=flat-square)
 ![Release](https://img.shields.io/github/v/release/hardenedpenguin/cap-alert?style=flat-square)
 [![APT repository](https://img.shields.io/badge/apt-hardenedpenguin.github.io-blue?logo=github)](https://hardenedpenguin.github.io/hardenedpenguin-apt/)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
